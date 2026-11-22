@@ -94,9 +94,14 @@ Read `design.suggested_nozzles` in `x2d-job.json` (without one, apply
 - An AMS can also feed the right nozzle (a second AMS, or Bambu's filament track
   switch): then ask which nozzle each AMS slot feeds and plan from that.
 
-Tell the person in one or two sentences, for example: "Put the black spool on the
-external holder (it prints with the right nozzle) and the yellow one in the AMS (left
-nozzle). Black runs through every layer, so on its own nozzle it needs no purge."
+Tell the person in one or two sentences, for example: "Put the yellow spool on the
+external holder (it prints with the right nozzle) and the black one in the AMS (left
+nozzle). Black is the main colour, so it stays on the left nozzle, the fast one; yellow
+on its own nozzle needs almost no purge."
+
+A job written by an older 3d-print-design may still suggest the main colour on the
+right nozzle. That plan prints slower (the right nozzle's walls run at 50 mm/s against
+200): follow rule 3 of the colour best practices instead, and say so.
 
 Loading the external spool, on the printer's touchscreen (labels can differ a little
 between firmware versions; if one differs, look for the external spool on the filament
@@ -203,7 +208,8 @@ Otherwise copy [templates/job.example.json](templates/job.example.json) next to 
 
 Before building, apply [references/colour-best-practices.md](references/colour-best-practices.md):
 colours by height on the left nozzle when each layer holds one colour, otherwise the
-dominant colour on its own nozzle, extra colours in few layers, one plate per group of
+main colour on the left nozzle (AMS) and the accent on the right one (external spool),
+extra colours in few layers, one plate per group of
 objects that would alternate colours on the same nozzle, one material per print. Tell the
 person what you chose and why, in one or two sentences.
 
@@ -234,6 +240,13 @@ Bambu Studio); per filament the same plus `nozzle` and `length_m`; `flush_time_s
 `prime_tower_time_s`; same-nozzle swaps and nozzle switches per layer. **Purge** here is
 flush plus prime tower together; Bambu Studio's Preview panel shows them apart
 ("Flushed" and "Tower"), so tell the person their sum is the guide's purge.
+
+**Less time and purge with two colours on two nozzles** (measured, sliced only: see
+[references/colour-best-practices.md](references/colour-best-practices.md), rules 7 and
+10): `"layer_height": "0.28"` where fine detail does not matter, and
+`"prime_volume_mode": "Saving"` for a lighter prime tower. Offer them as a second
+version with their real numbers from `--check`, never silently and not on a first
+multicolour print; say that the lighter tower was sliced, not print-tested.
 
 **Prime tower:** it is printed from the first layer up to the last colour change, so a
 single change near the top (a logo on the last layers) builds a tall tower that is mostly

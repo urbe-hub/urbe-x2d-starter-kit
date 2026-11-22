@@ -674,6 +674,39 @@ class TestAdviceByHeight(unittest.TestCase):
     def test_swaps_in_many_layers_suggest_other_nozzle(self):
         adv = " ".join(bp.colour_advice(self.report(20, 12, 24), template_settings(), ["1", "1"]))
         self.assertIn("other nozzle", adv)
+        # the accent moves to the right nozzle, the main colour stays on the fast left one
+        self.assertIn("put filament 2 there", adv)
+        self.assertIn("main colour (filament 1) on the left nozzle", adv)
+
+    def test_all_on_the_right_nozzle_moves_the_main_colour_left(self):
+        r = self.report(20, 12, 24)
+        for f in r["filaments"]:
+            f["nozzle"] = "right"
+        adv = " ".join(bp.colour_advice(r, template_settings(), ["2", "2"]))
+        self.assertIn("put the main colour (filament 1) there", adv)
+
+    def two_nozzles(self, main, accent, main_g=10, accent_g=1):
+        return {"filaments": [{"filament": 1, "model_g": main_g, "total_g": main_g + 1, "nozzle": main},
+                              {"filament": 2, "model_g": accent_g, "total_g": accent_g + 1, "nozzle": accent}],
+                "layers": 20, "layers_with_swaps": 0, "swaps_same_nozzle": 0, "nozzle_switches": 12,
+                "model_g": main_g + accent_g, "waste_g": 2}
+
+    def test_main_colour_on_the_right_nozzle_is_flagged(self):
+        adv = " ".join(bp.colour_advice(self.two_nozzles("right", "left"), template_settings(), ["2", "1"]))
+        self.assertIn("The main colour (filament 1) is on the right nozzle", adv)
+        self.assertIn("filament 2 on the external spool", adv)
+
+    def test_main_colour_on_the_left_nozzle_is_fine(self):
+        adv = " ".join(bp.colour_advice(self.two_nozzles("left", "right"), template_settings(), ["1", "2"]))
+        self.assertNotIn("main colour", adv)
+
+    def test_similar_colours_or_tpu_are_not_flagged(self):
+        r = self.two_nozzles("right", "left", main_g=6, accent_g=5)       # no clear main colour
+        self.assertIsNone(bp.main_colour_on_right(r["filaments"], ["PLA", "PLA"]))
+        r = self.two_nozzles("right", "left")
+        self.assertIsNone(bp.main_colour_on_right(r["filaments"], ["PLA", "TPU"]))   # TPU never on the right
+        self.assertEqual(bp.main_colour_on_right(r["filaments"], ["PLA", "PLA"]), (1, 2))
+        self.assertIsNone(bp.main_colour_on_right(r["filaments"][:1], ["PLA"]))
 
 
 class TestTowerByHeight(unittest.TestCase):

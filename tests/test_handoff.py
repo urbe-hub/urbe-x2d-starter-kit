@@ -83,10 +83,13 @@ class HandoffTests(unittest.TestCase):
         self.assertEqual(self.res.returncode, 0, self.res.stdout + self.res.stderr)
         job = json.loads(self.job_path.read_text())
         self.assertEqual(job["design"]["format"], 2)
-        # black and yellow share only a few layers: one nozzle is faster than heating a second
-        self.assertEqual(job["design"]["suggested_nozzles"], {"black": "left", "yellow": "left"})
+        # the main colour (black) stays on the left nozzle, the fast one; the accent (yellow) goes on
+        # the right one: no slower than all left, and less purge
+        self.assertEqual(job["design"]["suggested_nozzles"], {"black": "left", "yellow": "right"})
         options = {o["option"]: o for o in job["design"]["nozzle_options"]}
+        self.assertEqual(options["accent_right"]["nozzles"], {"black": "left", "yellow": "right"})
         self.assertEqual(options["dominant_right"]["nozzles"], {"black": "right", "yellow": "left"})
+        self.assertLessEqual(options["accent_right"]["minutes"], options["all_left"]["minutes"])
         self.assertLess(options["all_left"]["minutes"], options["dominant_right"]["minutes"])
         self.assertEqual({v["name"] for v in job["variants"]}, {"light", "strong"})
         self.assertIn("| light |", self.res.stdout)
@@ -98,9 +101,11 @@ class HandoffTests(unittest.TestCase):
     def test_filled_job_reads_in_x2d_print(self):
         job = bp.load_job(self.fill())
         self.assertEqual([p["filament"] for p in job["objects"][0]["parts"]], [5, 1])
-        self.assertEqual(bp.nozzle_map(job, SETTINGS), ["1", "1", "1", "1", "1"])
+        # the suggested plan: yellow (filament 1) on the right nozzle, black (filament 5) left
+        self.assertEqual(bp.nozzle_map(job, SETTINGS), ["2", "1", "1", "1", "1"])
         self.assertEqual(job["settings"]["wall_loops"], "3")
-        # the other plan: black (filament 5) on the right nozzle, everything else left
+        self.assertEqual(bp.nozzle_map(bp.load_job(self.fill("all_left")), SETTINGS), ["1"] * 5)
+        # the slow plan: black (filament 5) on the right nozzle, everything else left
         other = bp.load_job(self.fill("dominant_right"))
         self.assertEqual(bp.nozzle_map(other, SETTINGS), ["1", "1", "1", "1", "2"])
 
@@ -177,7 +182,7 @@ class HandoffTests(unittest.TestCase):
         self.assertEqual(s["filament_map"], ["1", "1", "1", "1", "2"])
 
     def test_design_and_template_agree(self):
-        for option in (None, "dominant_right"):
+        for option in (None, "all_left", "dominant_right"):
             job = bp.load_job(self.fill(option))
             warnings = bp.design_warnings(job, dict(SETTINGS, **job["settings"]), bp.nozzle_map(job, SETTINGS))
             self.assertEqual(warnings, [], (option, warnings))

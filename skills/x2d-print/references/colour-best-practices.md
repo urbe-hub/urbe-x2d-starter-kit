@@ -17,6 +17,14 @@ part.
 - What this skill measured on a 78 x 24 x 3 mm plaque, black base on the right nozzle and
   four small symbols in the first 4 layers on the left nozzle: 12 changes, about 4.7 g of
   model, about 6.3 g of purge and prime tower, 44 minutes.
+- What this skill measured in Bambu Studio 02.09.01.70 (sliced, not printed; Generic PLA,
+  0.2 mm layers) on a hollow 60 mm ball of 14.4 g with a logo inlay in 111 of its 357
+  layers: one colour 59 min; **logo on the right nozzle 1 h 47 min and 28.5 g** (14.2 g
+  of purge); body on the right nozzle 2 h 13 min and the same grams; both colours on the
+  left nozzle 4 h 48 min and 87.8 g (73.5 g of purge).
+- From the same run, on three objects: using both nozzles costs about 4.5 minutes once,
+  then about 24 s and 0.1 g for each layer with a nozzle switch. A swap on the same
+  nozzle costs about 2 minutes and 0.55 to 0.75 g, depending on the colour pair.
 
 ## Rules, most important first
 
@@ -30,13 +38,21 @@ part.
    Bambu mainly for supports. A single STL whose colours change only by height does not
    even need splitting: in Bambu Studio's Preview, right-click the layer slider at the
    first layer of each new colour and choose **Change Filament**.
-3. **Give the dominant colour its own nozzle** when the colours meet in many layers. Put
-   the colour that runs through most layers (base, body) on one nozzle and the accents on
-   the other: switching nozzle is free. In the usual X2D Combo setup the AMS feeds the
-   left nozzle, so the dominant colour usually goes on the external spool and the right
-   nozzle, unless it is TPU (the right nozzle cannot print TPU) or a material the Bowden
-   right side handles poorly. The right nozzle cannot reach a 20.5 mm strip at the left
-   edge of the plate and prints 5 mm lower, so parts on it need that margin.
+3. **Two nozzles when the colours meet in many layers: main colour left, accent right.**
+   Switching nozzle costs almost no purge, so split the colours across the two nozzles.
+   Which one goes where matters: the left nozzle (direct drive, fed by the AMS) is the
+   fast one. In Bambu Studio's X2D process the right nozzle (Bowden, external spool)
+   prints outer walls at 50 mm/s against 200 mm/s and accelerates at 1,000 mm/s² against
+   10,000. So the **main colour** (body, base: most of the plastic) stays in the AMS on
+   the left nozzle and the **accent** goes on the external spool and the right nozzle.
+   Measured on three objects with the two colours swapped: the same purge, and 1 %, 18 %
+   and 24 % more time with the body on the right nozzle (a block with a stripe, a coaster
+   with an inlay, the hollow ball above). The check says so when a two-colour job has its
+   main colour on the right nozzle. Exceptions: TPU never goes on the right nozzle; with
+   three or more colours, if two accents would then swap on the left nozzle in many
+   layers, the main colour alone on the right nozzle can win: build both jobs with
+   `--check` and compare. The right nozzle cannot reach a 20.5 mm strip at the left edge
+   of the plate and prints 5 mm lower, so parts on it need that margin.
 4. **Keep accent colours in few layers.** Inlays face down on the plate (the first 3 to 5
    layers, and the face against the plate comes out smooth) or on top. A colour that
    runs the full height of a part on the same nozzle as another colour costs a change on
@@ -51,7 +67,9 @@ part.
    and presses **Arrange** (`A`), which keeps clear of the prime tower. Time and grams
    then grow beyond the guide's numbers, the number of changes much less.
 7. **Thicker layers, fewer changes.** 0.24 or 0.28 mm instead of 0.20 cuts the number of
-   layers, and so the changes, for parts where detail is not critical.
+   layers, and so the changes, for parts where detail is not critical. Measured on the
+   hollow ball (logo on the right nozzle): 0.28 mm layers took 1 h 23 min and 24.9 g
+   instead of 1 h 47 min and 28.5 g. In the job: `"layer_height": "0.28"`.
 8. **One material per print.** PLA with PETG (or other mixes) bond poorly and need
    different temperatures. Mixing is for experts (soluble or breakaway supports).
 9. **Dark to light is the expensive change.** Going from black to white needs much more
@@ -74,10 +92,29 @@ part.
     the first few layers makes a short tower: leave it. Smooth-mode timelapse also builds a
     tower, as tall as the part, even with one colour. **Flush into support** is on by
     default; **flush into infill** is fine only for opaque parts where the mixed colour
-    hidden inside does not matter.
+    hidden inside does not matter, and does nothing on a hollow part or a thin shell,
+    which has no infill to take it.
+    **A lighter tower with two nozzles:** `"prime_volume_mode": "Saving"` in the job's
+    `settings` primes less on each tower layer. Measured on the hollow ball (logo on the
+    right nozzle, 111 switches): 1 h 36 min and 23.2 g (8.8 g of purge) instead of
+    1 h 47 min and 28.5 g (14.2 g); with 0.28 mm layers as well, 1 h 17 min and 21.3 g
+    (7.1 g of purge). These are slices, not prints: offer it for a second print, once
+    the first came out clean, and say that the first line after a switch may be thinner.
+    Turning the tower off with nozzle switches gave 1 h 20 min and no purge at all, but
+    then nothing primes the nozzle that was idle: do not do it. A narrower tower
+    (`prime_tower_width` 20) and the Arachne wall generator changed nothing here.
 11. **Flush multiplier stays at 1.0.** 0.8 to 0.9 can be tested on a scrap print once the
-    person knows what colour bleeding looks like; never on a first print.
+    person knows what colour bleeding looks like; never on a first print. In the job it
+    is a list with one value per nozzle, `"flush_multiplier": ["0.8", "0.8"]` (a single
+    value is refused). It is a small lever next to the nozzle plan: the hollow ball with
+    both colours on the left nozzle at 0.8 still took 4 h 25 min and 75.7 g, against
+    1 h 47 min and 28.5 g on two nozzles at 1.0.
 12. **Zero flush option:** print each colour as a separate part and glue them.
+13. **Hollow and light parts feel the purge most.** A thin shell weighs little, so the
+    tower and the flushes can double its filament (the ball: 14.4 g of model, 14.2 g of
+    purge). In order of effect: fewer layers where the colours meet (a lower logo, an
+    inlay near the top or the bottom), the nozzle plan (rule 3), thicker layers (rule 7),
+    the lighter tower (rule 10).
 
 ## Flush volumes after opening a project
 
@@ -104,8 +141,9 @@ re-calculate option.
 
 | Advice | Meaning | Usual fix |
 |---|---|---|
-| swaps on the same nozzle in N of M layers | colours alternate through much of the height | move the dominant colour to the other nozzle, keep accents in few layers, or split plates |
-| all colours use one nozzle, put the main colour on the other | given only with swaps in many layers (rule 3); colours that change only by height stay on the left nozzle (rule 2) | dominant colour on the external spool and the right nozzle |
+| swaps on the same nozzle in N of M layers | colours alternate through much of the height | move the accent to the other nozzle, keep accents in few layers, or split plates |
+| all colours use the left nozzle, put filament N on the other | given only with swaps in many layers (rule 3); colours that change only by height stay on the left nozzle (rule 2) | accent on the external spool and the right nozzle, main colour in the AMS |
+| the main colour is on the right nozzle | two colours on two nozzles, the larger one on the slow nozzle (rule 3) | swap them: main colour in the AMS (left nozzle), the other on the external spool |
 | purge more than the part | normal on small parts | fewer colours or colour layers, or several copies per plate |
 | several objects share the plate | objects make each other change colour | one plate (one 3MF) per object group |
 | different materials | poor bonding | one material |

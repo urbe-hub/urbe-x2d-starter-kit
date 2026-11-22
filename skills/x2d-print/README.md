@@ -9,7 +9,7 @@ the print.
 First print from zero? The [Urbe X2D starter kit](https://github.com/urbe-hub/urbe-x2d-starter-kit) installs this skill and 3d-print-design together.
 
 It also applies multicolour best practices so you do not throw away more plastic than you
-print: dominant colour on its own nozzle, accent colours in few layers, one plate per
+print: main colour on the fast left nozzle and the accent on the other one, accent colours in few layers, one plate per
 group of objects that would keep swapping colours.
 
 > Independent project, not affiliated with or endorsed by Bambu Lab. "Bambu Lab",
