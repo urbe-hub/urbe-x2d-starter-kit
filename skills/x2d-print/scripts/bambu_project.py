@@ -1398,11 +1398,40 @@ def colour_advice(r: dict, settings: dict, fmap) -> list:
         heavy = max(used, key=lambda f: f["model_g"])
         shared = [f for f in used if f is not heavy and f["nozzle"] == heavy["nozzle"]]
         other = [f for f in used if f["nozzle"] != heavy["nozzle"]]
-        if shared and len(other) == 0:
-            adv.append(f"All colours use the {heavy['nozzle']} nozzle. If the other nozzle is free "
-                       f"(for the right one, the external spool holder), put the main colour (filament "
-                       f"{heavy['filament']}) there: a nozzle switch costs no purge.")
+        if shared and len(other) == 0 and heavy["nozzle"] == "left":
+            accent = max(shared, key=lambda f: f["model_g"])
+            adv.append(f"All colours use the left nozzle. If the other nozzle is free (the right one, fed "
+                       f"by the external spool holder), put filament {accent['filament']} there and keep "
+                       f"the main colour (filament {heavy['filament']}) on the left nozzle: a nozzle switch "
+                       "costs almost no purge, and the right nozzle prints walls much slower, so it suits "
+                       "the smaller colour.")
+        elif shared and len(other) == 0:
+            adv.append(f"All colours use the right nozzle. If the other nozzle is free, put the main "
+                       f"colour (filament {heavy['filament']}) there: the left nozzle is the fast one, and "
+                       "a nozzle switch costs almost no purge.")
+    slow = main_colour_on_right(used, types)
+    if slow:
+        adv.append(f"The main colour (filament {slow[0]}) is on the right nozzle, which prints outer walls "
+                   "at 50 mm/s against 200 mm/s on the left one. With the two swapped (main colour in the "
+                   f"AMS on the left nozzle, filament {slow[1]} on the external spool) the purge is the "
+                   "same and three test objects sliced 1 to 19 % faster. Keep it as it is if the spools "
+                   "cannot be moved.")
     return adv
+
+
+def main_colour_on_right(used: list, types: list):
+    """(main filament, other filament) when a two-colour print has its main colour, by grams of model,
+    on the right nozzle and the other on the left one, and the two could swap; else None.
+    The right nozzle is the slow one (colour-best-practices.md, rule 3) and cannot print TPU."""
+    if len(used) != 2:
+        return None
+    heavy, light = sorted(used, key=lambda f: f["model_g"], reverse=True)
+    if heavy["nozzle"] != "right" or light["nozzle"] != "left" or heavy["model_g"] < 2 * light["model_g"]:
+        return None
+    kind = types[light["filament"] - 1] if 0 < light["filament"] <= len(types) else ""
+    if "TPU" in str(kind).upper():
+        return None
+    return heavy["filament"], light["filament"]
 
 
 # --------------------------------------------------------------------------- CLI
